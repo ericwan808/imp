@@ -12,16 +12,10 @@ void Writer::push( string data )
     return;
   }
 
-  uint64_t avail = this->available_capacity();
-  if (data.size() > avail){
-    this->buffer.append(data.substr(0, avail));
-    this->size += avail;
-    this->total_pushed += avail;
-  } else {
-    this->buffer.append(data);
-    this->size += data.size();
-    this->total_pushed += data.size();
-  }
+  uint64_t pushed_size = this->available_capacity() < data.size() ? this->available_capacity() : data.size();
+  this->buffer.append(data.begin(), data.begin() + pushed_size);
+  this->size += pushed_size;
+  this->total_pushed += pushed_size;
 }
 
 // Signal that the stream has reached its ending. Nothing more will be written.
@@ -61,16 +55,10 @@ string_view Reader::peek() const
 void Reader::pop( uint64_t len )
 {
 
-  if (len > this->size){
-    this->buffer = "";
-    this->total_popped += this->size;
-    this->size = 0;
-    
-  } else {
-    this->buffer.erase(0, len);
-    this->total_popped += len;
-    this->size -= len;
-  }
+  uint64_t popped_size = this -> size < len ? this->size: len;
+  this->buffer.erase(0, popped_size);
+  this->total_popped += popped_size;
+  this->size -= popped_size;
 }
 
 // Is the stream finished (closed and fully popped)?

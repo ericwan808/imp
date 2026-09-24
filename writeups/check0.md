@@ -21,6 +21,11 @@ terms of simplicity/complexity, risk of bugs, asymptotic performance,
 empirical performance, required implementation time and difficulty,
 and other factors. Include any measurements if applicable.]
 
+I initially chose to implement the buffer with a string, making use of its builtin functions to implement push, peek, and pop.
+Size enforcement had to be done manually. The ability to specify a certain range on append and erase was useful to handle this enforcement.
+It was rather simple to implement since much of the complexity was handled by builtin functions, but the throughput suffers with many pops due to the inefficiency of erasing from the start of a string.
+Peeking is very simple since we can just return the entire buffer.
+
 Implementation Challenges:
 []
 
