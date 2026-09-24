@@ -1,15 +1,15 @@
 Checkpoint 0 Writeup
 ====================
 
-My name: [your name here]
+My name: Eric Wan
 
-My SUNet ID: [your sunetid here]
+My SUNet ID: ehwan
 
-I collaborated with: [list sunetids here]
+I collaborated with: Calista Woo, Kenneth Liu, Logan Wang, Ethan Lai, Greg Li
 
 I would like to credit/thank these classmates for their help: [list sunetids here]
 
-This lab took me about [n] hours to do. I [did/did not] attend the lab session.
+This lab took me about [n] hours to do. I did attend the lab session.
 
 I was surprised by or edified to learn that: [describe]
 
