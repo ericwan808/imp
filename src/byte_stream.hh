@@ -31,6 +31,9 @@ protected:
   uint64_t total_popped;
   uint64_t size;
   std::string buffer;
+
+  uint64_t head;
+  uint64_t tail;
   
 };
 

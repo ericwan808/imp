@@ -26,6 +26,8 @@ Size enforcement had to be done manually. The ability to specify a certain range
 It was rather simple to implement since much of the complexity was handled by builtin functions, but the throughput suffers with many pops due to the inefficiency of erasing from the start of a string.
 Peeking is very simple since we can just return the entire buffer.
 
+We need to make sure in the case that tail is "before" head the capacity does not go over or under.
+
 Implementation Challenges:
 []
 
