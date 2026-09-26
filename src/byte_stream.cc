@@ -5,7 +5,7 @@ using namespace std;
 
 ByteStream::ByteStream( uint64_t capacity ) : capacity_( capacity ), closed(false), total_pushed(0), total_popped(0), 
   size(0), buffer(""), head(0), tail(0){
-    this->buffer.resize(capacity);
+    this->buffer.resize(capacity,'0');
   }
 
 // Push data to stream, but only as much as available capacity allows.
@@ -30,7 +30,7 @@ void Writer::push( string data )
 
   // if we need to wrap around, we push the remaining data from the start of the ring
   // on the other hand, if segment_to_end is the entire pushed_size, this line will do nothing
-  this->buffer.replace(buf_iter, buf_iter+pushed_size-segment_to_end, data_iter+segment_to_end, data_iter+pushed_size);
+  this->buffer.replace(buf_iter, buf_iter + pushed_size-segment_to_end, data_iter + segment_to_end, data_iter + pushed_size);
 
   //this->buffer.append(data.begin(), data.begin() + pushed_size);
 
@@ -70,18 +70,20 @@ uint64_t Writer::bytes_pushed() const
 // the caller to do a lot of extra work.
 string_view Reader::peek() const
 {
-  string peeked_string;
-
-  if(this->tail > this->head){
+  
+  string_view peeked_string;
+  
+  if(this->size < this->capacity_ - this->head){
     // if the queue does not wrap around, we can just read it from the head to the tail
-    peeked_string =  this->buffer.substr(this->head, this->size);
+    peeked_string =  string_view(this->buffer).substr(this->head, this->size);
   } else {
     // if the queue wraps, we read from the head to the end of the ring
-    peeked_string =  this->buffer.substr(this->head, this->capacity_-this->head);
-    // and then from the start of the ring to the tail
-    peeked_string.append(this->buffer.substr(0, this->tail));
+    // this will require at most one other peek for the remaining buffer
+    peeked_string =  string_view(this->buffer).substr(this->head, this->capacity_-this->head);
   }
   return peeked_string;
+
+  
 }
 
 // Remove `len` bytes from the buffer.
