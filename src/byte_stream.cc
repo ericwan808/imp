@@ -5,6 +5,7 @@ using namespace std;
 
 ByteStream::ByteStream( uint64_t capacity ) : capacity_( capacity ), closed(false), total_pushed(0), total_popped(0), 
   size(0), buffer(""), head(0), tail(0){
+    // immediately allocate space for the full buffer so string.replace does not throw an error
     this->buffer.resize(capacity,'0');
   }
 
@@ -25,14 +26,12 @@ void Writer::push( string data )
   auto buf_iter = this->buffer.begin();
   auto data_iter = data.begin();
 
-  // we push from the tail to either the end of the ring or the entire pushed_size
+  // we push from the tail to the end of the ring or the entire pushed_size
   this->buffer.replace(buf_iter + this->tail, buf_iter + this->tail + segment_to_end, data_iter, data_iter + segment_to_end);
 
   // if we need to wrap around, we push the remaining data from the start of the ring
-  // on the other hand, if segment_to_end is the entire pushed_size, this line will do nothing
+  // on the other hand, if segment_to_end == pushed_size, this line will do nothing
   this->buffer.replace(buf_iter, buf_iter + pushed_size-segment_to_end, data_iter + segment_to_end, data_iter + pushed_size);
-
-  //this->buffer.append(data.begin(), data.begin() + pushed_size);
 
   // update tail, size, and total_pushed
   this->tail = (this->tail + pushed_size)%capacity_;
@@ -81,8 +80,8 @@ string_view Reader::peek() const
     // this will require at most one other peek for the remaining buffer
     peeked_string =  string_view(this->buffer).substr(this->head, this->capacity_-this->head);
   }
+  
   return peeked_string;
-
   
 }
 
@@ -94,7 +93,6 @@ void Reader::pop( uint64_t len )
 
   // "free" the popped space by simply moving the head of the queue
   this->head = (this->head + popped_size)%this->capacity_;
-  // this->buffer.erase(0, popped_size);
 
   // update size and total_popped
   this->size -= popped_size;
