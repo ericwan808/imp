@@ -21,10 +21,10 @@ terms of simplicity/complexity, risk of bugs, asymptotic performance,
 empirical performance, required implementation time and difficulty,
 and other factors. Include any measurements if applicable.]
 
-I initially chose to implement the buffer with a string and its builtin functions to implement push, peek, and pop.
+I initially chose to implement the buffer with a string and implement push, peek, and pop with its builtin functions.
 Size enforcement had to be done manually. The ability to specify a certain range on append and erase was useful to handle this enforcement.
 It was rather simple to implement, but the throughput suffers with many pops due to the inefficiency of erasing from the start of a string.
-When we do many small erases to the start of a string, we need to shift all the remaining characters forward.
+When doing many small erases to the start of a string, the function needs to shift all the remaining characters forward.
 Thus, the complexity of push is O(n) due to append and the complexity of pop is O(n) due to erase.
 Peeking is very simple since we can just return a string_view to the entire buffer in O(1).
 
@@ -35,8 +35,8 @@ Pop is now much simpler and involves moving the head to "deallocate" part of the
 Peek is slightly more complex (with challenges described below), but remains O(1) due to the fact that substr is O(1) on string_view objects since we don't copy the string itself.
 Push uses replace as a sort of memcpy function to move chunks of data into the buffer. The only real difference is that we may have to cut the data into two pieces when it loops around the ring. Also, to make sure replace does not throw an error, buffer is initialized to be the full capacity using resize. It is still O(n) to move all the data into the buffer.
 
-The (rounded) throughput in speed test for the simpler implementation was: (pop lenght 4096) 13 Gbit/s, (pop lenght 128) 3 Gbit/s, (pop lenght 32) 1 Gbit/s
-In the ring buffer queue implementation: 13 Gbit/s, 10 Gbit/s, 8 Gbit/s
+The (rounded) throughput in speed test for the simpler implementation was: (pop lenght 4096) 13 Gbit/s, (pop lenght 128) 3 Gbit/s, (pop lenght 32) 1 Gbit/s.
+In the ring buffer queue implementation: 13 Gbit/s, 10 Gbit/s, 8 Gbit/s.
 This should match our expectations, since using erase was slowest when we did many small pops.
 
 Implementation Challenges:

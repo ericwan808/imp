@@ -11,19 +11,19 @@ using namespace std;
 namespace {
 void get_URL( const string& host, const string& path )
 {
-  // setup the 
-  const Address addr(host, "http");
+  // setup the
+  const Address addr( host, "http" );
   TCPSocket sock;
-  sock.connect(addr);
+  sock.connect( addr );
 
   //
   const string get_str = "GET " + path + " HTTP/1.1\r\nHost: " + host + "\r\nConnection: close\r\n\r\n";
-  sock.write_all(get_str);
+  sock.write_all( get_str );
 
   //
   string out;
-  while (!sock.eof()){
-    sock.read(out);
+  while ( !sock.eof() ) {
+    sock.read( out );
     cout << out;
   }
 }

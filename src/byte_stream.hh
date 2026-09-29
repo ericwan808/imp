@@ -26,15 +26,14 @@ protected:
   uint64_t capacity_;
   bool error_ {};
 
-  bool closed;
-  uint64_t total_pushed;
-  uint64_t total_popped;
-  uint64_t size;
-  std::string buffer;
+  bool closed { false };       // stream closed
+  uint64_t total_pushed { 0 }; // total pushed bytes
+  uint64_t total_popped { 0 }; // total popped bytes
+  uint64_t size { 0 };         // bytes currently in buffer
+  std::string buffer;          // buffer
 
-  uint64_t head;
-  uint64_t tail;
-  
+  uint64_t head { 0 }; // start of buffer within allocated capacity
+  uint64_t tail { 0 }; // end of buffer within allocated capacity
 };
 
 class Writer : public ByteStream
