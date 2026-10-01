@@ -5,16 +5,27 @@ My name: Eric Wan
 
 My SUNet ID: ehwan
 
-I collaborated with: [list sunetids here]
+I collaborated with: Kenneth Liu, Erica Dong, Harrison
 
-I would like to thank/reward these classmates for their help: [list sunetids here]
+I would like to thank/reward these classmates for their help: merrittb
 
-This lab took me about [n] hours to do. I [did/did not] attend the lab session.
+This lab took me about [n] hours to do. I did attend the lab session.
 
 I was surprised by or edified to learn that: [describe]
 
 Report from the hands-on component of the lab checkpoint: [include
 information from 2.1(4), and report on your experience in 2.2]
+2.1
+a. Average delay: 41.627 ms
+b. Delivery rate: 100%, Loss rate: 0%
+c. No
+d. "tcpdump: listening on wg0, link-type RAW (Raw IP), snapshot length 262144 bytes
+20:16:30.052696 IP 10.144.0.10 > 10.144.0.42: ICMP echo request, id 27243, seq 1, length 64
+20:16:30.073061 IP 10.144.0.42 > 10.144.0.10: ICMP echo reply, id 27243, seq 1, length 64"
+e. Yes, the version is 4, header length is 20 bytes, etc.
+f. ttl is decremented by one on the reciever compared to sender, header checksum is different
+
+2.2
 
 Describe Reassembler structure and design. [Describe data structures and
 approach taken. Describe alternative designs considered or tested.

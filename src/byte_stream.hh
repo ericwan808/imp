@@ -30,7 +30,7 @@ protected:
   uint64_t total_pushed { 0 }; // total pushed bytes
   uint64_t total_popped { 0 }; // total popped bytes
   uint64_t size { 0 };         // bytes currently in buffer
-  std::string buffer;          // buffer
+  std::string buffer {""};          // buffer
 
   uint64_t head { 0 }; // start of buffer within allocated capacity
   uint64_t tail { 0 }; // end of buffer within allocated capacity

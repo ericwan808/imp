@@ -9,7 +9,7 @@ I collaborated with: Calista Woo, Kenneth Liu, Logan Wang, Ethan Lai, Greg Li
 
 I would like to credit/thank these classmates for their help: hchen0
 
-This lab took me about 10 hours to do. I did attend the lab session.
+This lab took me about 7 hours to do. I did attend the lab session.
 
 I was surprised by or edified to learn that: you have to cast a string to string_view before taking a substr if you want to return that substring.
 
