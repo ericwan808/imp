@@ -4,7 +4,7 @@
 using namespace std;
 
 ByteStream::ByteStream( uint64_t capacity )
-  : capacity_( capacity ), total_pushed( 0 ), total_popped( 0 ), size( 0 ), buffer( "" ), head( 0 ), tail( 0 )
+  : capacity_( capacity )
 {
   // immediately allocate space for the full buffer so string.replace does not throw an error
   this->buffer.resize( capacity, '0' );
