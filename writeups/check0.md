@@ -39,6 +39,10 @@ The (rounded) throughput in speed test for the simpler implementation was: (pop 
 In the ring buffer queue implementation: 13 Gbit/s, 10 Gbit/s, 8 Gbit/s.
 This should match our expectations, since using erase was slowest when we did many small pops.
 
+During the lab, Professor Winstein mentioned my implementation of the ring buffer was not "elegant" and used too many variables.
+I ended up removing everything but total_pushed and total_popped, which we can use to calculate head, tail, and size.
+I also used a better overloaded version of replace that did not need iterators to remove a tidy error.
+
 Implementation Challenges:
 In the peek function, I encountered a stack-use-after-return error when trying to implement the ring buffer queue. Using gdb, it seemed that the initial return value was correct, but then the value would get corrupted when the function returned.
 I thought it might have something to do with substr since I know that function creates a temporary copy of a string. I tried storing the substr in a string and then returning it, but the problem persisted.

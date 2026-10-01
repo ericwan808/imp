@@ -25,15 +25,12 @@ protected:
   // Please add any additional state to the ByteStream here, and not to the Writer and Reader interfaces.
   uint64_t capacity_;
   bool error_ {};
+  bool closed { false }; // stream closed
 
-  bool closed { false };       // stream closed
   uint64_t total_pushed { 0 }; // total pushed bytes
   uint64_t total_popped { 0 }; // total popped bytes
-  uint64_t size { 0 };         // bytes currently in buffer
-  std::string buffer {""};          // buffer
 
-  uint64_t head { 0 }; // start of buffer within allocated capacity
-  uint64_t tail { 0 }; // end of buffer within allocated capacity
+  std::string buffer {}; // buffer
 };
 
 class Writer : public ByteStream

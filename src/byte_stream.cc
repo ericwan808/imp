@@ -3,7 +3,7 @@
 
 using namespace std;
 
-ByteStream::ByteStream( uint64_t capacity ): capacity_( capacity )
+ByteStream::ByteStream( uint64_t capacity ) : capacity_( capacity )
 {
   // immediately allocate space for the full buffer so string.replace does not throw an error
   buffer.resize( capacity, '0' );
@@ -17,28 +17,22 @@ void Writer::push( string data )
     return;
   }
 
+  const uint64_t tail = total_pushed % capacity_;
+
   // only push up to capacity
   const uint64_t pushed_size = available_capacity() < data.size() ? available_capacity() : data.size();
 
   // if we need to wrap to the beginning of the ring, segment_to_end will be less than the pushed_size
-  const uint64_t segment_to_end
-    = ( capacity_ - tail ) < pushed_size ? ( capacity_ - tail ) : pushed_size;
-
-  const auto buf_iter = buffer.begin();
-  const auto data_iter = data.begin();
+  const uint64_t segment_to_end = ( capacity_ - tail ) < pushed_size ? ( capacity_ - tail ) : pushed_size;
 
   // we push from the tail to the end of the ring or the entire pushed_size
-  buffer.replace(
-    buf_iter + tail, buf_iter + tail + segment_to_end, data_iter, data_iter + segment_to_end );
+  buffer.replace( tail, segment_to_end, data, 0, segment_to_end );
 
   // if we need to wrap around, we push the remaining data from the start of the ring
   // on the other hand, if segment_to_end == pushed_size, this line will do nothing
-  buffer.replace(
-    buf_iter, buf_iter + pushed_size - segment_to_end, data_iter + segment_to_end, data_iter + pushed_size );
+  buffer.replace( 0, pushed_size - segment_to_end, data, segment_to_end, pushed_size - segment_to_end );
 
-  // update tail, size, and total_pushed
-  tail = ( tail + pushed_size ) % capacity_;
-  size += pushed_size;
+  // update total_pushed
   total_pushed += pushed_size;
 }
 
@@ -57,7 +51,8 @@ bool Writer::is_closed() const
 // How many bytes can be pushed to the stream right now?
 uint64_t Writer::available_capacity() const
 {
-  return capacity_ - size;
+  // total_pushed - total_popped is the current amount of bytes in the buffer
+  return capacity_ - ( total_pushed - total_popped );
 }
 
 // Total number of bytes cumulatively pushed to the stream
@@ -75,6 +70,9 @@ string_view Reader::peek() const
 
   string_view peeked_string;
 
+  const uint64_t size = bytes_buffered();
+  const uint64_t head = total_popped % capacity_;
+
   if ( size < capacity_ - head ) {
     // if the queue does not wrap around, we can just read it from the head to the tail
     peeked_string = string_view( buffer ).substr( head, size );
@@ -90,29 +88,26 @@ string_view Reader::peek() const
 // Remove `len` bytes from the buffer.
 void Reader::pop( uint64_t len )
 {
+  const uint64_t size = bytes_buffered();
+
   // we can only pop up to the current buffer size
   const uint64_t popped_size = size < len ? size : len;
 
-  // "free" the popped space by simply moving the head of the queue
-  head = ( head + popped_size ) % capacity_;
-
-  // update size and total_popped
-  size -= popped_size;
+  // update total_popped
   total_popped += popped_size;
 }
 
 // Is the stream finished (closed and fully popped)?
 bool Reader::is_finished() const
 {
-  return closed && size == 0;
+  return closed && ( bytes_buffered() == 0 );
 }
 
 // Number of bytes currently buffered (pushed and not popped)
 uint64_t Reader::bytes_buffered() const
 {
-  return size;
+  return total_pushed - total_popped;
 }
-
 // Total number of bytes cumulatively popped from stream
 uint64_t Reader::bytes_popped() const
 {

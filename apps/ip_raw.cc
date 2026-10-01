@@ -15,13 +15,12 @@ int main()
   datagram += string( 6, 0 ); // rest of next two lines
 
   // destination address
-  datagram += char(10); 
-  datagram += char(144);
-  datagram += char(0);
-  datagram += char(86);
+  datagram += char( 10 );
+  datagram += char( 144 );
+  datagram += char( 0 );
+  datagram += char( 86 );
 
   datagram += "Hello!";
 
-  RawSocket{}.send( datagram,  Address {"10.144.0.86"});
-
+  RawSocket {}.send( datagram, Address { "10.144.0.86" } );
 }
