@@ -26,6 +26,7 @@ e. Yes, the version is 4, header length is 20 bytes, etc.
 f. ttl is decremented by one on the reciever compared to sender, header checksum is different
 
 2.2
+We encountered some issues with sending the datagram at first, but this was fixed once we changed the Address field of the send function to include the full ip address of the destination.
 
 Describe Reassembler structure and design. [Describe data structures and
 approach taken. Describe alternative designs considered or tested.
