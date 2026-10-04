@@ -44,6 +44,8 @@ closing stream when not all bytes of last_segment is pushed,
 managing data size on reassembler's end, ie writer push would never get data beyond capacity
 opens up writer to throw error and remove like 1 line of code.
 
+Slow with overlap 
+
 Implementation Challenges:
 []
 

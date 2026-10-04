@@ -59,7 +59,7 @@ During the lab, Professor Winstein mentioned my implementation of the ring
 buffer was not "elegant" and used too many variables. I ended up removing 
 everything but total_pushed and total_popped, which we can use to calculate 
 head, tail, and size. I also used a better overloaded version of replace that 
-did not need iterators to remove a tidy error.
+did not use iterators to remove a tidy error.
 
 Implementation Challenges:
 In the peek function, I encountered a stack-use-after-return error when trying 

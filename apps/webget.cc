@@ -11,16 +11,16 @@ using namespace std;
 namespace {
 void get_URL( const string& host, const string& path )
 {
-  // setup the
+  // setup the socket
   const Address addr( host, "http" );
   TCPSocket sock;
   sock.connect( addr );
 
-  //
+  // fetch webpage
   const string get_str = "GET " + path + " HTTP/1.1\r\nHost: " + host + "\r\nConnection: close\r\n\r\n";
   sock.write_all( get_str );
 
-  //
+  // print until end of file
   string out;
   while ( !sock.eof() ) {
     sock.read( out );

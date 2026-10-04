@@ -21,18 +21,18 @@ void Writer::push( string data )
 
   const uint64_t tail = total_pushed % capacity_;
 
-  // only push up to capacity
+  // only push up to capacity, any extra is discarded
   const uint64_t pushed_size = available_capacity() < data.size() ? available_capacity() : data.size();
 
-  // if we need to wrap to the beginning of the ring, segment_to_end will be less than the pushed_size
-  const uint64_t segment_to_end = ( capacity_ - tail ) < pushed_size ? ( capacity_ - tail ) : pushed_size;
+  // if we need to wrap to the beginning of the ring, dist_to_end will be less than the pushed_size
+  const uint64_t dist_to_end = ( capacity_ - tail ) < pushed_size ? ( capacity_ - tail ) : pushed_size;
 
   // we push from the tail to the end of the ring or the entire pushed_size
-  buffer.replace( tail, segment_to_end, data, 0, segment_to_end );
+  buffer.replace( tail, dist_to_end, data, 0, dist_to_end );
 
   // if we need to wrap around, we push the remaining data from the start of the ring
-  // on the other hand, if segment_to_end == pushed_size, this line will do nothing
-  buffer.replace( 0, pushed_size - segment_to_end, data, segment_to_end, pushed_size - segment_to_end );
+  // on the other hand, if dist_to_end == pushed_size, this line will do nothing
+  buffer.replace( 0, pushed_size - dist_to_end, data, dist_to_end, pushed_size - dist_to_end );
 
   // update total_pushed
   total_pushed += pushed_size;

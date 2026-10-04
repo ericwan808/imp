@@ -43,7 +43,6 @@ public:
   const Writer& writer() const { return output_.writer(); }
 
 private:
-
   struct StreamSegment
   {
     uint64_t index;
@@ -53,5 +52,4 @@ private:
 
   ByteStream output_;
   std::list<StreamSegment> segments {};
-
 };
