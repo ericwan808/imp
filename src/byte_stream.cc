@@ -1,6 +1,8 @@
 #include "byte_stream.hh"
 #include "debug.hh"
 
+#include <algorithm>
+
 using namespace std;
 
 ByteStream::ByteStream( uint64_t capacity ) : capacity_( capacity )

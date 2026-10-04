@@ -1,7 +1,7 @@
 #pragma once
 
 #include "byte_stream.hh"
-#include <vector>
+#include <list>
 
 class Reassembler
 {
@@ -47,10 +47,11 @@ private:
   struct StreamSegment
   {
     uint64_t index;
-    std::string contents;
+    bool is_last_substring;
+    std::string data;
   };
 
   ByteStream output_;
-  std::vector<StreamSegment> segments {};
+  std::list<StreamSegment> segments {};
 
 };

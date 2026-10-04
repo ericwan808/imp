@@ -1,6 +1,8 @@
 #include "reassembler.hh"
 #include "debug.hh"
 
+#include <algorithm>
+
 using namespace std;
 
 /*
@@ -25,6 +27,7 @@ using namespace std;
  */
 void Reassembler::insert( uint64_t first_index, string data, bool is_last_substring )
 {
+  //Writer writer = output_.writer();
   // check for exceeding capacity
   // equivalent to total_popped + capacity_
   uint64_t unacceptable_index = 
@@ -32,44 +35,79 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
 
   // insert new segment if any part of it could be pushed
   if (first_index < unacceptable_index) {
-    StreamSegment newSegment = {first_index, data};
+    StreamSegment newSegment = {first_index, is_last_substring, data};
 
-    // sorted backwards based on index for easy popping
-    for (int i = segments.size(); i >= 0; i--){
-      if (i == 0){
-        segments.insert(segments.begin() + i, newSegment);
-        continue;
-      }
-      if (first_index < segments[i-1].index){
-        segments.insert(segments.begin() + i, newSegment);
-        continue;
-      }
+    list<StreamSegment>::iterator iter = segments.begin();
+
+    while (iter != segments.end() &&  iter->index < first_index) {
+      ++iter;
     }
+    segments.insert(iter, newSegment);
   }
 
   // check if first segment can be pushed to byte_stream until can't anymore
-  string pushed_string;
-  while (segments[-1].index <= output_.writer().bytes_pushed()){
-    
-    // cut off front portion that is already pushed
-    pushed_string = segments[-1].contents
-    .substr(output_.writer().bytes_pushed() - segments[-1].index);
-    
-    // byte_stream will cut it off back portion if its too long
-    output_.writer().push(pushed_string);
-    segments.pop_back();
-  }
+  uint64_t data_size;
+  uint64_t start_byte;
+  uint64_t pushed_size;
 
-  if ( is_last_substring ) {
-    output_.writer().close();
+  while (segments.size() > 0 && 
+    segments.front().index <= output_.writer().bytes_pushed()){
+
+    data_size = segments.front().data.size();
+
+    // get index of first byte in data that needs to be pushed
+    start_byte = output_.writer().bytes_pushed() - segments.front().index;
+  
+    // if the next byte of data is already after this segment, we skip it
+    if (start_byte <= data_size){
+
+      // check for capacity constraints before pushing
+      pushed_size = min(data_size - start_byte, output_.writer().available_capacity());
+
+      output_.writer().push(segments.front().data.substr(start_byte, pushed_size));
+
+      // need to check that all bytes of a "last_substring" are pushed before closing
+      if ( segments.front().is_last_substring && start_byte + pushed_size == data_size) {
+        output_.writer().close();
+      }
+    }
+    
+    // remove segment once processed
+    segments.pop_front();
   }
-  debug( "unimplemented insert({}, {}, {}) called", first_index, data, is_last_substring );
+  //debug( "unimplemented insert({}, {}, {}) called", first_index, data, is_last_substring );
 }
 
 // How many bytes are stored in the Reassembler itself?
 // This function is for testing only; don't add extra state to support it.
 uint64_t Reassembler::count_bytes_pending() const
 {
-  debug( "unimplemented count_bytes_pending() called" );
-  return {};
+  uint64_t count = 0;
+  uint64_t last_counted_index = 0;
+
+  uint64_t unacceptable_index = 
+    output_.writer().bytes_pushed() + output_.writer().available_capacity();
+
+  uint64_t start_index;
+  uint64_t end_index;
+
+  for (StreamSegment segment : segments ){
+
+    if (last_counted_index >= segment.index + segment.data.size()) {
+      continue;
+    }
+
+    end_index = unacceptable_index < segment.index + segment.data.size() ? unacceptable_index : segment.index + segment.data.size();
+    start_index = segment.index < last_counted_index ? last_counted_index : segment.index;
+
+    if (end_index <= start_index) {
+      continue;
+    }
+
+    count += end_index - start_index;
+    last_counted_index = end_index;
+  }
+
+  //debug( "unimplemented count_bytes_pending() called" );
+  return count;
 }

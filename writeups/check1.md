@@ -36,6 +36,14 @@ bugs, asymptotic performance, empirical performance, required
 implementation time and difficulty, and other factors. Include any
 measurements if applicable.]
 
+vector vs list, list inserts anywhere in constant time
+
+problems encountered:
+closing stream when inserting the last substring into segment list instead of closing when it actually added
+closing stream when not all bytes of last_segment is pushed,
+managing data size on reassembler's end, ie writer push would never get data beyond capacity
+opens up writer to throw error and remove like 1 line of code.
+
 Implementation Challenges:
 []
 
