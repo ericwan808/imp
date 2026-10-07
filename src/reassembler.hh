@@ -31,6 +31,10 @@ public:
    */
   void insert( uint64_t first_index, std::string data, bool is_last_substring );
 
+  // push as many stored segments to the writer as possible
+  // runs after every insert
+  void push_until_gap();
+
   // How many bytes are stored in the Reassembler itself?
   // This function is for testing only; don't add extra state to support it.
   uint64_t count_bytes_pending() const;

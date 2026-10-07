@@ -5,11 +5,11 @@ My name: Eric Wan
 
 My SUNet ID: ehwan
 
-I collaborated with: Kenneth Liu, Erica Dong, Harrison
+I collaborated with: Kenneth Liu, Erica Dong, Harrison Chen
 
 I would like to thank/reward these classmates for their help: merrittb
 
-This lab took me about [n] hours to do. I did attend the lab session.
+This lab took me about 6 hours to do. I did attend the lab session.
 
 I was surprised by or edified to learn that: [describe]
 
@@ -26,7 +26,9 @@ e. Yes, the version is 4, header length is 20 bytes, etc.
 f. ttl is decremented by one on the reciever compared to sender, header checksum is different
 
 2.2
-We encountered some issues with sending the datagram at first, but this was fixed once we changed the Address field of the send function to include the full ip address of the destination.
+We encountered some issues with sending the datagram at first, but this was 
+fixed once we changed the Address field of the send function to include the full 
+ip address of the destination.
 
 Describe Reassembler structure and design. [Describe data structures and
 approach taken. Describe alternative designs considered or tested.
@@ -36,18 +38,21 @@ bugs, asymptotic performance, empirical performance, required
 implementation time and difficulty, and other factors. Include any
 measurements if applicable.]
 
-vector vs list, list inserts anywhere in constant time
+vector vs list, 
+list is linear to find place to insert, constant to insert
+vector is log to find place, linear to insert (if need to shift elements)
+removing elements is constant for list, removing last element is constant for vector
 
-problems encountered:
+Assuming segments can arrive in any order, opted for list
+
+Slow with overlap, 42 Gbit/s without overlap, 4 Gbit/s with 10x overlap
+
+Implementation Challenges:
+roblems encountered:
 closing stream when inserting the last substring into segment list instead of closing when it actually added
 closing stream when not all bytes of last_segment is pushed,
 managing data size on reassembler's end, ie writer push would never get data beyond capacity
 opens up writer to throw error and remove like 1 line of code.
-
-Slow with overlap 
-
-Implementation Challenges:
-[]
 
 Remaining Bugs:
 []

@@ -5,26 +5,6 @@
 
 using namespace std;
 
-/*
- * Insert a new substring to be reassembled into a ByteStream.
- *   `first_index`: the index of the first byte of the substring
- *   `data`: the substring itself
- *   `is_last_substring`: this substring represents the end of the stream
- *   `output`: a mutable reference to the Writer
- *
- * The Reassembler's job is to reassemble the indexed substrings (possibly out-of-order
- * and possibly overlapping) back into the original ByteStream. As soon as the Reassembler
- * learns the next byte in the stream, it should write it to the output.
- *
- * If the Reassembler learns about bytes that fit within the stream's available capacity
- * but can't yet be written (because earlier bytes remain unknown), it should store them
- * internally until the gaps are filled in.
- *
- * The Reassembler should discard any bytes that lie beyond the stream's available capacity
- * (i.e., bytes that couldn't be written even if earlier gaps get filled in).
- *
- * The Reassembler should close the stream after writing the last byte.
- */
 void Reassembler::insert( uint64_t first_index, string data, bool is_last_substring )
 {
   // Writer writer = output_.writer();
@@ -44,28 +24,32 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
     segments.insert( iter, newSegment );
   }
 
-  // check if first segment can be pushed to byte_stream until can't anymore
+  // after each new insertion, try to push to the writer
+  push_until_gap();
+}
+
+void Reassembler::push_until_gap(){
+
   uint64_t data_size;
   uint64_t start_byte;
-  uint64_t pushed_size;
 
+  // check if segment with lowest index can be pushed to byte_stream
   while ( segments.size() > 0 && segments.front().index <= output_.writer().bytes_pushed() ) {
 
     data_size = segments.front().data.size();
 
-    // get index of first byte in data that needs to be pushed
+    // get index of first byte in segment's data that needs to be pushed
     start_byte = output_.writer().bytes_pushed() - segments.front().index;
 
     // if the next byte of data is already after this segment, we skip it
     if ( start_byte <= data_size ) {
 
-      // check for capacity constraints before pushing
-      pushed_size = min( data_size - start_byte, output_.writer().available_capacity() );
+      // overcapacity is handled by push itself
+      output_.writer().push( segments.front().data.substr( start_byte ) );
 
-      output_.writer().push( segments.front().data.substr( start_byte, pushed_size ) );
-
-      // need to check that all bytes of a "last_substring" are pushed before closing
-      if ( segments.front().is_last_substring && start_byte + pushed_size == data_size ) {
+      // check that all bytes are pushed before closing
+      if ( segments.front().is_last_substring && 
+        output_.writer().bytes_pushed() >= data_size + segments.front().index ) {
         output_.writer().close();
       }
     }
@@ -73,7 +57,6 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
     // remove segment once processed
     segments.pop_front();
   }
-  // debug( "unimplemented insert({}, {}, {}) called", first_index, data, is_last_substring );
 }
 
 // How many bytes are stored in the Reassembler itself?
