@@ -11,7 +11,9 @@ I would like to thank/reward these classmates for their help: merrittb
 
 This lab took me about 6 hours to do. I did attend the lab session.
 
-I was surprised by or edified to learn that: [describe]
+I was surprised by or edified to learn that: you can simply write a c++ string
+in a certain formatting to create an acceptable IP datagram and that there is no
+special data structure in c++ for it.
 
 Report from the hands-on component of the lab checkpoint: [include
 information from 2.1(4), and report on your experience in 2.2]
@@ -38,21 +40,41 @@ bugs, asymptotic performance, empirical performance, required
 implementation time and difficulty, and other factors. Include any
 measurements if applicable.]
 
-vector vs list, 
-list is linear to find place to insert, constant to insert
-vector is log to find place, linear to insert (if need to shift elements)
-removing elements is constant for list, removing last element is constant for vector
+The simplest approach I could think of was to simply store the segments without
+any processing in a list. Then, I would greedily push as many segments as I 
+could into the Writer. The trigger for pushing a segment would be that its 
+first_index was less than or equal to the next needed byte by the Writer. Thus, 
+I decided that the list should be sorted by first_index so we only need to check 
+whether the first element of the list could be pushed.
 
-Assuming segments can arrive in any order, opted for list
+I had a little trouble deciding between using a vector or a (linked) list in my 
+implementation. List is linear time to insert a sorted element since we need to 
+iterate through each link to get there, but it is constant in removing. Vector 
+can use binary search to find the place to insert in log time, but could still 
+take linear time to insert due to shifting the other elements in the array. 
+Removing an element can still be constant if we sort in reverse and pop the last
+ element. For simplicity of implementation and the slight possibility of a 
+speedup on insert, I chose the list.
 
-Slow with overlap, 42 Gbit/s without overlap, 4 Gbit/s with 10x overlap
+The reassembler is quite slow with an overlap. Its speeds are 42 Gbit/s without 
+overlap, and 4 Gbit/s with a 10x overlap. I believe this comes from the fact 
+that I need to sort each new arriving segment while also processing them for 
+pushing even if the amount of new data they contribute is minimal.
+
+To try and improve the throughput I decided to trim incoming segments before 
+inserting them into the list. This would reduce the amount of data stored and 
+also simplify the push_until_gap and count_pending_bytes functions at the 
+expense of a more complex insert function.
+
+
 
 Implementation Challenges:
-roblems encountered:
-closing stream when inserting the last substring into segment list instead of closing when it actually added
-closing stream when not all bytes of last_segment is pushed,
-managing data size on reassembler's end, ie writer push would never get data beyond capacity
-opens up writer to throw error and remove like 1 line of code.
+The largest implementation bug was closing the stream when any byte of the 
+last substring was pushed, rather than waiting until all bytes of the last 
+substring were pushed. This alone was solved by checking that the bytes pushed 
+(aka the next needed byte) was after the last byte of the last substring. 
+However, getting the code to look clean while also checking for other things like 
+whether to skip a segment entirely took some intermediate variables.
 
 Remaining Bugs:
 []
