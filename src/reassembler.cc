@@ -30,27 +30,26 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
 
 void Reassembler::push_until_gap()
 {
-  
-
-  uint64_t data_size = 0;  // size of data to be pushed
-  uint64_t start_byte = 0; // first byte in segment that needs to be pushed
+  Writer& writer = output_.writer();
 
   // check if segment with lowest index can be pushed to byte_stream
-  while ( !segments.empty() && segments.front().index <= output_.writer().bytes_pushed() ) {
+  while ( !segments.empty() && segments.front().index <= writer.bytes_pushed() ) {
+    StreamSegment& segment = segments.front();
 
-    data_size = segments.front().data.size();
-    start_byte = output_.writer().bytes_pushed() - segments.front().index;
+    const uint64_t data_size = segment.data.size(); // size of data to be pushed
+    const uint64_t start_byte
+      = writer.bytes_pushed() - segment.index; // first byte in segment that needs to be pushed
 
     // if the next byte of data is already after this segment, we skip it
     if ( start_byte <= data_size ) {
 
       // cut off front overlapped data
-      output_.writer().push( segments.front().data.substr( start_byte ) );
+      segment.data.erase( 0, start_byte );
+      writer.push( move( segment.data ) );
 
       // check that all bytes are pushed before closing
-      if ( segments.front().is_last_substring
-           && output_.writer().bytes_pushed() >= data_size + segments.front().index ) {
-        output_.writer().close();
+      if ( segment.is_last_substring && writer.bytes_pushed() >= data_size + segment.index ) {
+        writer.close();
       }
     }
 
@@ -69,23 +68,15 @@ uint64_t Reassembler::count_bytes_pending() const
   // stop counting after capacity
   const uint64_t unacceptable_index = output_.writer().bytes_pushed() + output_.writer().available_capacity();
 
-  // the indexes in a segment we actually count
-  uint64_t start_index = 0;
-  uint64_t end_index = 0;
-
   for ( const StreamSegment& segment : segments ) {
 
-    // skip if entire segment is overlapped
-    if ( last_counted_index >= segment.index + segment.data.size() ) {
-      continue;
-    }
-
     // choose larger of last_counted or start of segment as start of count
-    start_index = segment.index < last_counted_index ? last_counted_index : segment.index;
+    const uint64_t start_index = segment.index < last_counted_index ? last_counted_index : segment.index;
 
     // choose smaller of unacceptable index or last segment index as end of count
-    end_index = unacceptable_index < segment.index + segment.data.size() ? unacceptable_index
-                                                                         : segment.index + segment.data.size();
+    const uint64_t end_index = unacceptable_index < segment.index + segment.data.size()
+                                 ? unacceptable_index
+                                 : segment.index + segment.data.size();
 
     // if the segment we want to count occurs after the unacceptable index we skip it
     // this can also occur if the data size is 0

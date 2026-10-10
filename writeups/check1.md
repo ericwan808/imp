@@ -61,12 +61,14 @@ overlap, and 4 Gbit/s with a 10x overlap. I believe this comes from the fact
 that I need to sort each new arriving segment while also processing them for 
 pushing even if the amount of new data they contribute is minimal.
 
-To try and improve the throughput I decided to trim incoming segments before 
-inserting them into the list. This would reduce the amount of data stored and 
-also simplify the push_until_gap and count_pending_bytes functions at the 
-expense of a more complex insert function.
-
-
+To try and improve the throughput I attempted to trim the incoming segments to 
+be non-overlapping. Although this would have reduced the complexity of the 
+push_until_gap and count_bytes_pending functions, it turned out to be more work 
+than was worth. Perhaps I will try and entirely different data structure if 
+the throughput becomes a problem in the future. However in the process of trying 
+to make it work I looked into the erase and move functions on cppreference, 
+which I used to do some minor optimizations. The throughput of the overlapped 
+data increased to 5 Gbit/s, so ultimately the effect was minimal.
 
 Implementation Challenges:
 The largest implementation bug was closing the stream when any byte of the 
