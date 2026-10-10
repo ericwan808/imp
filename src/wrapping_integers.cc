@@ -26,7 +26,6 @@ uint64_t Wrap32::unwrap( Wrap32 zero_point, uint64_t checkpoint ) const
   }
 
   // vise versa if the checkpoint_offset is close to the "bottom"
-  // TODO: check underflow
   if ( checkpoint_offset < offset && 
     offset - checkpoint_offset > 2147483648 &&
     num_loops > 0 ) {

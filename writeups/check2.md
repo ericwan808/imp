@@ -1,9 +1,9 @@
 Checkpoint 2 Writeup
 ====================
 
-My name: [your name here]
+My name: Eric Wan
 
-My SUNet ID: [your sunetid here]
+My SUNet ID: ehwan
 
 I collaborated with: [list sunetids here]
 
