@@ -6,18 +6,18 @@ using namespace std;
 void TCPReceiver::receive( TCPSenderMessage message )
 {
   // if this is the first time getting a SYN, set the ISN
-  if ( message.SYN && !zero_point_) {
-    zero_point_ = message.seqno;
+  if ( message.SYN && !isn_) {
+    isn_.emplace(message.seqno);
   }
 
   // abort if other side sends RST or we are missing the ISN
-  if (message.RST || !zero_point_){
+  if (message.RST || !isn_){
     reassembler_.reader().set_error();
     return;
   }
 
   // unwrap seqno to obtain absolute seqno
-  uint64_t abs_seqno = message.seqno.unwrap( *zero_point_, reassembler_.writer().bytes_pushed() )
+  uint64_t abs_seqno = message.seqno.unwrap( *isn_, reassembler_.writer().bytes_pushed() )
     + static_cast<int>(message.SYN);
   
   // SYN takes up one absolute seqno but no stream indexes
@@ -35,10 +35,10 @@ TCPReceiverMessage TCPReceiver::send() const
   // default is no ackno
   TCPReceiverMessage new_reciever_message { .ackno = nullopt, .window_size = adjusted_window, .RST = false };
 
-  if (zero_point_){
+  if (isn_){
     // +1 for SYN and +1 for FIN if stream is closed
     uint64_t abs_seqno = reassembler_.writer().bytes_pushed() + 1 + static_cast<int>(reassembler_.writer().is_closed());
-    new_reciever_message.ackno = Wrap32::wrap(abs_seqno, *zero_point_);
+    new_reciever_message.ackno = Wrap32::wrap(abs_seqno, *isn_);
   }
 
   // if an error has occured ask to RST

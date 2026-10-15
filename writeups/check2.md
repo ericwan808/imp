@@ -20,11 +20,13 @@ implementation time and difficulty, and other factors. Include any
 measurements if applicable.]
 
 There was not much to add on the data structure. For the receiver, all I added 
-was a private variable to keep track of the ISN. The recieve function simply 
-checks for some errors, gets the right stream index using unwrap (plus some 
-extra additions to account for SYN), and inserts into the reassembler which 
-does the hard work. The send function is similarly mostly error checking and 
-preparing the required message.
+was a private variable to keep track of the ISN. I made it optional so that we 
+can also tell if the connection has even been fully established yet. The recieve 
+function simply checks for some errors, gets the right stream index using unwrap 
+(plus some extra additions to account for SYN), and inserts into the reassembler 
+which does the hard work. The send function is similarly mostly error checking 
+and preparing the required message. I chose to have the default message have 
+no ackno since it would only be filled if there was no ISN given from the sender.
 
 
 Implementation Challenges:
