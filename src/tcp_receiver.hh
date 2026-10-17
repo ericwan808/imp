@@ -27,5 +27,5 @@ public:
 
 private:
   Reassembler reassembler_;
-  std::optional<Wrap32> isn_ {std::nullopt}; // ISN for this connection
+  std::optional<Wrap32> isn_ { std::nullopt }; // ISN for this connection
 };
