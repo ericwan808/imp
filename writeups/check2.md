@@ -19,33 +19,27 @@ of bugs, asymptotic performance, empirical performance, required
 implementation time and difficulty, and other factors. Include any
 measurements if applicable.]
 
+New variables:
 There was not much to add on the data structure. For the receiver, all I added 
 was a private variable to keep track of the ISN. I made it optional so that we 
-can also tell if the connection has even been fully established yet. The recieve 
-function simply checks for some errors, gets the right stream index using unwrap 
-(plus some extra additions to account for SYN), and inserts into the reassembler 
-which does the hard work. The send function is similarly mostly error checking 
-and preparing the required message. I chose to have the default message have 
-no ackno since it would only be filled if there was no ISN given from the sender.
+can also tell if the connection has even been fully established yet. 
+
+Errors and RST:
+I decided to connect the RST and byte stream error functions directly. That is 
+to say that one will trigger the other. In checkpoint 0, I did not implement 
+any other way for the byte stream to receive an error internally, so this error 
+would have to originate from either user calling set_error.
 
 
 Implementation Challenges:
-Converting a raw seqno to the absolute seqno and then to the stream index was 
-definitely the most challenging part of the checkpoint. The first thing I did 
-zero-out the ISN to get the first possible absolute seqno. From there, it helped 
-to draw a diagram on paper of repeating chunks of 2^32 and see where the 
-possible absolute seqnos could be relative to the checkpoint. Conceptually it 
-was somewhat difficult to imagine when we should take the seqno above or below 
-the checkpoint, but again the paper diagram helped a lot.
 
-Converting between absolute seqno and the stream index was much easier. In the 
-recieve function we don't need to account for the position FIN would take, so we 
-only need to subtract out the one position SYN takes before passing things to 
-the reassembler. In the send function if we are sending an ackno then we must 
-have recieved a SYN flag, so we can always include the +1 required for the 
-absolute seqno. Also if the stream is closed we must have recieved a FIN flag, 
-so we can include that +1 as well.
-
+unwrap:
+I solved this little puzzle by drawing out a number line spaced by 2^32 byte 
+chunks. The first possible absolute seqno is easy to calculate since unsigned 
+int wraps its subtraction on its own. From there it just came down to imagining 
+the possible places the checkpoint could be relative to the possible absolute 
+seqnos. Figuring out whether to take the lower or higher possible choice is 
+done by comparing their difference with 2^31, or half of a 2^32 byte chunk.
 Remaining Bugs:
 []
 
