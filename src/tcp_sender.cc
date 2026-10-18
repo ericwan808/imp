@@ -37,7 +37,7 @@ void TCPSender::push( const TransmitFunction& transmit )
 
     if (avail_space > 0){
       string_view payload = reader().peek();
-      const size_t payload_size = min( avail_space , payload.size() );
+      const size_t payload_size = min( {avail_space , payload.size(), TCPConfig::MAX_PAYLOAD_SIZE });
       // trim payload if too large
       new_sender_message.payload = string(payload.substr(0, payload_size));
 
@@ -79,9 +79,9 @@ void TCPSender::receive( const TCPReceiverMessage& msg )
     return;
   }
 
-  // make sure this is the most recent information
+  // make sure this is relevant information
   uint64_t new_acked = msg.ackno->unwrap(isn_, acked_);
-  if (new_acked <= acked_) {
+  if (new_acked < acked_ || new_acked > next_seqno_) {
     return;
   }
   acked_ = new_acked;
