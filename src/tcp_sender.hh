@@ -51,6 +51,7 @@ private:
   uint64_t next_seqno_ {0}; // next seqno not yet sent
   uint64_t acked_ {0}; // last acked seqno
   uint64_t win_size_ {1}; // window size
+  bool fin_sent { false }; // whether or not we've already sent FIN
   
   std::queue<TCPSenderMessage> outstanding_ {}; // queue of outstanding messages
 };

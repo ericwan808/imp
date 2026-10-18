@@ -35,6 +35,10 @@ Cannot do that, so instead have a choice between:
 I use a list instead of a queue because they have the same functionality and I 
 read more of the cppreference on list compared to queue.
 
+
+fin_sent used since after we send it and everything is acked, we cannot tell 
+what has been sent previously so we might resend fin
+
 Implementation Challenges:
 []
 

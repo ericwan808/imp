@@ -52,7 +52,7 @@ void TCPSender::push( const TransmitFunction& transmit )
     }
 
     // if we have nothing new to say, don't say anything
-    if (new_sender_message.sequence_length() == 0  || (!outstanding_.empty() && outstanding_.back().FIN)){
+    if (new_sender_message.sequence_length() == 0  || fin_sent){
       break;
     }
 
@@ -60,6 +60,10 @@ void TCPSender::push( const TransmitFunction& transmit )
 
     // next_seqno_ is now the ackno this message is waiting for
     next_seqno_ += new_sender_message.sequence_length();
+
+    if (new_sender_message.FIN) {
+      fin_sent = true;
+    }
     outstanding_.push( new_sender_message );
   }
 }
