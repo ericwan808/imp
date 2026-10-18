@@ -1,9 +1,9 @@
 Checkpoint 3 Writeup
 ====================
 
-My name: [your name here]
+My name: Eric Wan
 
-My SUNet ID: [your sunetid here]
+My SUNet ID: ehwan
 
 I collaborated with: [list sunetids here]
 
@@ -18,6 +18,22 @@ with alternatives -- perhaps in terms of simplicity/complexity, risk
 of bugs, asymptotic performance, empirical performance, required
 implementation time and difficulty, and other factors. Include any
 measurements if applicable.]: []
+
+How to determine whether or not to send SYN:
+1. send SYN until ackno, then send rest of byte stream
+2. send SYN once and only resend if timeout
+
+Choose 1 so I don't have to add another state to keep track of and also makes it
+easier to calculate the current abs_seqno
+
+Cannot do that, so instead have a choice between:
+1. store next abs sequence number to send for the first time
+2. store booleans for SYN and FIN
+
+1 feels more elegant
+
+I use a list instead of a queue because they have the same functionality and I 
+read more of the cppreference on list compared to queue.
 
 Implementation Challenges:
 []
