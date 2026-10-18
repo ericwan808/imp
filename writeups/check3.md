@@ -39,8 +39,13 @@ read more of the cppreference on list compared to queue.
 fin_sent used since after we send it and everything is acked, we cannot tell 
 what has been sent previously so we might resend fin
 
+what occurs when receive gets the same seqno
+
 Implementation Challenges:
-[]
+when can win_size be artificially set to 1?
+Initially interpreted as "at most once per received request", which made
+implementation difficult since repeated pushes could send 1 new seqno total before 
+having to wait for an ackno. However, making it per-push was much easier.
 
 Remaining Bugs:
 []

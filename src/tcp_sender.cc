@@ -21,8 +21,9 @@ uint64_t TCPSender::consecutive_retransmissions() const
 
 void TCPSender::push( const TransmitFunction& transmit )
 {
-  // to ensure push will at least send one new seqno
-  uint64_t avail_space = acked_ + win_size_ - next_seqno_;
+  
+  // ensure we send at least one new seqno if desired
+  uint64_t avail_space = acked_ - next_seqno_ + max( win_size_, static_cast<uint64_t>(1));
 
   // transmit as many messages as possible
   while ( avail_space > 0 ) {
@@ -46,13 +47,14 @@ void TCPSender::push( const TransmitFunction& transmit )
     }
 
     // send FIN if finished and there is space
-    if ( reader().is_finished() && avail_space > 0 ) {
+    if ( reader().is_finished() && avail_space > 0 && !fin_sent) {
       new_sender_message.FIN = true;
       avail_space -= 1;
+      fin_sent = true;
     }
 
     // if we have nothing new to say, don't say anything
-    if (new_sender_message.sequence_length() == 0  || fin_sent){
+    if (new_sender_message.sequence_length() == 0 ){
       break;
     }
 
@@ -60,10 +62,6 @@ void TCPSender::push( const TransmitFunction& transmit )
 
     // next_seqno_ is now the ackno this message is waiting for
     next_seqno_ += new_sender_message.sequence_length();
-
-    if (new_sender_message.FIN) {
-      fin_sent = true;
-    }
     outstanding_.push( new_sender_message );
   }
 }
@@ -71,36 +69,47 @@ void TCPSender::push( const TransmitFunction& transmit )
 TCPSenderMessage TCPSender::make_empty_message() const
 {
   TCPSenderMessage emptyMessage
-    = { .seqno = isn_.operator+( next_seqno_ ), .SYN = false, .payload = "", .FIN = false, .RST = false };
+    = { .seqno = isn_.operator+( next_seqno_ ), .SYN = false, .payload = "", .FIN = false, .RST = input_.has_error() };
   return emptyMessage;
 }
 
 void TCPSender::receive( const TCPReceiverMessage& msg )
 {
-
-  if ( !msg.ackno ) {
-    win_size_ = max(msg.window_size, static_cast<uint16_t>(1));
+  if (msg.RST){
+    input_.set_error();
     return;
   }
 
-  // make sure this is relevant information
-  uint64_t new_acked = msg.ackno->unwrap(isn_, acked_);
-  if (new_acked < acked_ || new_acked > next_seqno_) {
-    return;
-  }
-  acked_ = new_acked;
-  win_size_ = max(msg.window_size, static_cast<uint16_t>(1));
+  if (msg.ackno){
+    
+    const uint64_t new_acked = msg.ackno->unwrap(isn_, acked_);
 
-  while (!outstanding_.empty()){
-    if (outstanding_.front().seqno.unwrap(isn_, acked_) + outstanding_.front().sequence_length() > acked_){
-      break;
+    // old seqnos or bogus seqnos
+    if (new_acked < acked_ || new_acked > next_seqno_) {
+      return;
     }
-    outstanding_.pop();
-  }
-  current_RTO_ms_ = initial_RTO_ms_;
-  consec_retrans_ = 0;
-  last_retrans_ = 0;
 
+    // new seqnos, == case excluded to prevent timer reset
+    if (new_acked > acked_){
+      
+      acked_ = new_acked;
+
+      while (!outstanding_.empty()){
+        if (outstanding_.front().seqno.unwrap(isn_, acked_) + outstanding_.front().sequence_length() > acked_){
+          break;
+        }
+        outstanding_.pop();
+      }
+
+      current_RTO_ms_ = initial_RTO_ms_;
+      consec_retrans_ = 0;
+      last_retrans_ = 0;
+    }
+  }
+
+  // win_size_ is updated when acked_ is updated 
+  // as well as when there is no acked_ or new_acked == acked_
+  win_size_ = msg.window_size;
 }
 
 void TCPSender::tick( uint64_t ms_since_last_tick, const TransmitFunction& transmit )
