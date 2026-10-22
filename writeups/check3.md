@@ -5,7 +5,7 @@ My name: Eric Wan
 
 My SUNet ID: ehwan
 
-I collaborated with: [list sunetids here]
+I collaborated with: khliu
 
 I would like to thank/reward these classmates for their help: [list sunetids here]
 
@@ -46,6 +46,26 @@ when can win_size be artificially set to 1?
 Initially interpreted as "at most once per received request", which made
 implementation difficult since repeated pushes could send 1 new seqno total before 
 having to wait for an ackno. However, making it per-push was much easier.
+
+
+eric@eric-laptop:~/Desktop/cs144/imp$ </dev/null ./build/apps/tcp_native -l 0 9090 > /tmp/big-received.txt
+DEBUG: Listening for incoming connection...
+DEBUG: New connection from 10.144.0.86:16471.
+DEBUG: Outbound stream to 10.144.0.86:16471 finished.
+DEBUG: Inbound stream from 10.144.0.86:16471 finished.
+eric@eric-laptop:~/Desktop/cs144/imp$ ls -l /tmp/big-received.txt
+-rw-rw-r-- 1 eric eric 30000000 Oct 21 20:34 /tmp/big-received.txt
+eric@eric-laptop:~/Desktop/cs144/imp$ sha256sum /tmp/big-received.txt
+736e57035a54f61a7b320b4b471d2783f53c975f4e6cf324739a192689a9c3c6  /tmp/big-received.txt
+
+
+from Kenneth:
+sha256sum /tmp/big.txt
+736e57035a54f61a7b320b4b471d2783f53c975f4e6cf324739a192689a9c3c6  /tmp/big.txt
+
+ls -l /tmp/big.txt
+-rw-rw-r-- 1 cs144 cs144 30000000 Oct 22 03:34 /tmp/big.txt
+
 
 Remaining Bugs:
 []

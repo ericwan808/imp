@@ -1,5 +1,6 @@
 #include "debug.hh"
-#include "socket.hh"
+// #include "socket.hh"
+#include "tcp imp socket.hh"
 
 #include <cstdlib>
 #include <iostream>
@@ -13,7 +14,7 @@ void get_URL( const string& host, const string& path )
 {
   // setup the socket
   const Address addr( host, "http" );
-  TCPSocket sock;
+  CS144TCPSocket sock;
   sock.connect( addr );
 
   // fetch webpage
@@ -26,6 +27,7 @@ void get_URL( const string& host, const string& path )
     sock.read( out );
     cout << out;
   }
+  socket.wait_until_closed();
 }
 } // namespace
 

@@ -21,9 +21,9 @@ uint64_t TCPSender::consecutive_retransmissions() const
 
 void TCPSender::push( const TransmitFunction& transmit )
 {
-  
+
   // ensure we send at least one new seqno if desired
-  uint64_t avail_space = acked_ - next_seqno_ + max( win_size_, static_cast<uint64_t>(1));
+  uint64_t avail_space = max( win_size_, static_cast<uint64_t>( 1 ) ) - sequence_numbers_in_flight();
 
   // transmit as many messages as possible
   while ( avail_space > 0 ) {
@@ -36,29 +36,29 @@ void TCPSender::push( const TransmitFunction& transmit )
       avail_space -= 1;
     }
 
-    if (avail_space > 0){
-      string_view payload = reader().peek();
-      const size_t payload_size = min( {avail_space , payload.size(), TCPConfig::MAX_PAYLOAD_SIZE });
+    if ( avail_space > 0 ) {
+      const string_view payload = reader().peek();
+      const size_t payload_size = min( { avail_space, payload.size(), TCPConfig::MAX_PAYLOAD_SIZE } );
       // trim payload if too large
-      new_sender_message.payload = string(payload.substr(0, payload_size));
+      new_sender_message.payload = string( payload.substr( 0, payload_size ) );
 
       reader().pop( payload_size );
       avail_space -= new_sender_message.payload.size();
     }
 
     // send FIN if finished and there is space
-    if ( reader().is_finished() && avail_space > 0 && !fin_sent) {
+    if ( reader().is_finished() && avail_space > 0 && !fin_sent ) {
       new_sender_message.FIN = true;
       avail_space -= 1;
       fin_sent = true;
     }
 
     // if we have nothing new to say, don't say anything
-    if (new_sender_message.sequence_length() == 0 ){
+    if ( new_sender_message.sequence_length() == 0 ) {
       break;
     }
 
-    transmit(new_sender_message);
+    transmit( new_sender_message );
 
     // next_seqno_ is now the ackno this message is waiting for
     next_seqno_ += new_sender_message.sequence_length();
@@ -68,34 +68,34 @@ void TCPSender::push( const TransmitFunction& transmit )
 
 TCPSenderMessage TCPSender::make_empty_message() const
 {
-  TCPSenderMessage emptyMessage
-    = { .seqno = isn_.operator+( next_seqno_ ), .SYN = false, .payload = "", .FIN = false, .RST = input_.has_error() };
+  TCPSenderMessage emptyMessage = {
+    .seqno = isn_.operator+( next_seqno_ ), .SYN = false, .payload = "", .FIN = false, .RST = input_.has_error() };
   return emptyMessage;
 }
 
 void TCPSender::receive( const TCPReceiverMessage& msg )
 {
-  if (msg.RST){
+  if ( msg.RST ) {
     input_.set_error();
     return;
   }
 
-  if (msg.ackno){
-    
-    const uint64_t new_acked = msg.ackno->unwrap(isn_, acked_);
+  if ( msg.ackno ) {
+
+    const uint64_t new_acked = msg.ackno->unwrap( isn_, acked_ );
 
     // old seqnos or bogus seqnos
-    if (new_acked < acked_ || new_acked > next_seqno_) {
+    if ( new_acked < acked_ || new_acked > next_seqno_ ) {
       return;
     }
 
     // new seqnos, == case excluded to prevent timer reset
-    if (new_acked > acked_){
-      
+    if ( new_acked > acked_ ) {
+
       acked_ = new_acked;
 
-      while (!outstanding_.empty()){
-        if (outstanding_.front().seqno.unwrap(isn_, acked_) + outstanding_.front().sequence_length() > acked_){
+      while ( !outstanding_.empty() ) {
+        if ( outstanding_.front().seqno.unwrap( isn_, acked_ ) + outstanding_.front().sequence_length() > acked_ ) {
           break;
         }
         outstanding_.pop();
@@ -107,26 +107,29 @@ void TCPSender::receive( const TCPReceiverMessage& msg )
     }
   }
 
-  // win_size_ is updated when acked_ is updated 
+  // win_size_ is updated when acked_ is updated
   // as well as when there is no acked_ or new_acked == acked_
   win_size_ = msg.window_size;
 }
 
 void TCPSender::tick( uint64_t ms_since_last_tick, const TransmitFunction& transmit )
 {
-  if (outstanding_.empty()){
+  // if there is nothing outstanding we don't need to keep track of anythingS
+  if ( outstanding_.empty() ) {
     return;
   }
 
+  // update time since last retransmission and quit if we don't need to retransmit
   last_retrans_ += ms_since_last_tick;
-
-  if (last_retrans_ < current_RTO_ms_){
+  if ( last_retrans_ < current_RTO_ms_ ) {
     return;
   }
 
-  transmit(outstanding_.front());
+  // retransmit oldest oustanding message
+  transmit( outstanding_.front() );
 
-  if(win_size_ > 0){
+  // backoff
+  if ( win_size_ > 0 ) {
     current_RTO_ms_ *= 2;
   }
 
