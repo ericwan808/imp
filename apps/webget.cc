@@ -1,6 +1,6 @@
 #include "debug.hh"
 // #include "socket.hh"
-#include "tcp imp socket.hh"
+#include "tcp_imp_socket.hh"
 
 #include <cstdlib>
 #include <iostream>
@@ -27,7 +27,7 @@ void get_URL( const string& host, const string& path )
     sock.read( out );
     cout << out;
   }
-  socket.wait_until_closed();
+  sock.wait_until_closed();
 }
 } // namespace
 
