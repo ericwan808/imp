@@ -32,5 +32,5 @@ uint64_t Wrap32::unwrap( Wrap32 zero_point, uint64_t checkpoint ) const
     num_loops -= 0x0000000100000000ULL;
   }
 
-  return { num_loops + offset }; // get closest valid wrap
+  return num_loops + offset; // get closest valid wrap
 }

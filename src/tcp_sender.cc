@@ -46,11 +46,11 @@ void TCPSender::push( const TransmitFunction& transmit )
       avail_space -= new_sender_message.payload.size();
     }
 
-    // send FIN if finished and there is space
-    if ( reader().is_finished() && avail_space > 0 && !fin_sent ) {
+    // send FIN if finished and there is space and no previous FIN sent
+    if ( reader().is_finished() && avail_space > 0 && 
+      next_seqno_ < reader().bytes_popped() + 2 ) {
       new_sender_message.FIN = true;
       avail_space -= 1;
-      fin_sent = true;
     }
 
     // if we have nothing new to say, don't say anything
