@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <queue>
+#include <map>
 
 // A "network interface" that connects IP (the internet layer, or network layer)
 // with Ethernet (the network access layer, or link layer).
@@ -82,4 +83,6 @@ private:
 
   // Datagrams that have been received
   std::queue<InternetDatagram> datagrams_received_ {};
+
+  std::map ip_to_eth_<uint32_t,EthernetAddress> {};
 };

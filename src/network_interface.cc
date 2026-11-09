@@ -30,16 +30,40 @@ NetworkInterface::NetworkInterface( string_view name,
 //! can be converted to a uint32_t (raw 32-bit IP address) by using the Address::ipv4_numeric() method.
 void NetworkInterface::send_datagram( InternetDatagram dgram, const Address& next_hop )
 {
-  debug( "unimplemented send_datagram called" );
-  (void)dgram;
-  (void)next_hop;
+
+  // if next_hop not in map
+  // push to queue
+  // send ARP request
+  // EthernetHeader header {dst = , src  = ethernet_address_, type = TYPE_ARP};
+  // return
+
+  EthernetHeader header {dst = ip_to_eth_[Address::ipv4_numeric(next_hop)], src  = ethernet_address_, type = TYPE_IPv4};
+  EthernetFrame frame {header = header, payload = serialize( dgram );}
 }
 
 //! \param[in] frame the incoming Ethernet frame
 void NetworkInterface::recv_frame( EthernetFrame frame )
 {
-  debug( "unimplemented recv_frame called" );
-  (void)frame;
+  EthernetHeader header = frame.header;
+  if (header.type == TYPE_ARP){
+    ARPMessage arp;
+    if(parse(arp, frame.payload)){
+
+      if(arp.opcode == OPCODE_REQUEST){
+
+        // send arp OPCODE_REPLY
+      } else if (arp.opcode == OPCODE_REPLY){
+        ip_to_eth_[arp.sender_ip_address] = arp.sender_ethernet_address;
+      }
+    }
+  }
+
+  if (header.type == TYPE_IPv4){
+   InternetDatagram internet_datagram;
+   if ( parse( internet_datagram, frame.payload ) ) {
+    datagrams_received_.push_back(internet_datagram);
+   }
+  }
 }
 
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method
