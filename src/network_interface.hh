@@ -84,5 +84,11 @@ private:
   // Datagrams that have been received
   std::queue<InternetDatagram> datagrams_received_ {};
 
-  std::map ip_to_eth_<uint32_t,EthernetAddress> {};
+  std::unordered_map ip_to_eth_<uint32_t,EthernetAddress> {};
+  std::queue<QueuedIntegernetDatagram> datagrams_waiting_ {};
+
+  struct QueuedIntegernetDatagram {
+    InternetDatagram dgram;
+    Address adr;
+  }
 };
