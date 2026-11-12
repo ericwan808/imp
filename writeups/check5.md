@@ -1,9 +1,9 @@
 Checkpoint 5 Writeup
 ====================
 
-My name: [your name here]
+My name: Eric Wan
 
-My SUNet ID: [your sunetid here]
+My SUNet ID: ehwan
 
 I collaborated with: [list sunetids here]
 
@@ -20,8 +20,17 @@ implementation time and difficulty, and other factors. Include any
 measurements if applicable.]:
 []
 
+
+Originally had a seperate list for arps awaiting response and queue for ip timeout
+However, we need to update ip timeout
+
+Should EthernetAddress also be placed into same object so we'd only need one map 
+of relavent ip information?
+
+Use list instead of queue for the clear function
+
 Implementation Challenges:
-[]
+queue in map did not update, needed to change to reference using &.
 
 Remaining Bugs:
 []
