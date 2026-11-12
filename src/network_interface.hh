@@ -85,6 +85,9 @@ private:
   // Datagrams that have been received
   std::queue<InternetDatagram> datagrams_received_ {};
 
+
+  void update_arp_requests(uint32_t addr);
+  
   // ip and associated information such as connected ethernet_address
   std::unordered_map<uint32_t,EthernetAddress> ip_to_eth_ {};
 
@@ -101,6 +104,4 @@ private:
   };
 
   std::unordered_map<uint32_t,ARPRequest> arp_requests_ {};
-
-  void update_arp_requests(uint32_t addr);
 };

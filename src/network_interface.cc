@@ -79,6 +79,8 @@ void NetworkInterface::recv_frame( EthernetFrame frame )
 
       uint32_t learned_ip = arp.sender_ip_address;
 
+      update_arp_requests(learned_ip);
+
       ip_to_eth_[learned_ip] = arp.sender_ethernet_address;
       arp_requests_[learned_ip].received_time = cur_time_;
 
@@ -115,10 +117,15 @@ void NetworkInterface::recv_frame( EthernetFrame frame )
   }
 }
 
-void update_arp_requests(uint32_t addr){
-    if(cur_time_ - arp_requests_[addr].received_time >= 30000){
+void NetworkInterface::update_arp_requests(uint32_t addr){
+
+    if(ip_to_eth_.contains(addr) && cur_time_ - arp_requests_[addr].received_time >= 30000){
       arp_requests_[addr].sent = false;
       ip_to_eth_.erase(addr);
+      arp_requests_[addr].waiting_datagrams.clear();
+    }
+
+    if(arp_requests_[addr].sent && cur_time_ - arp_requests_[addr].sent_time >= 5000){
       arp_requests_[addr].waiting_datagrams.clear();
     }
 }
