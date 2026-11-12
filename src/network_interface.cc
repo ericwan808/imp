@@ -30,16 +30,16 @@ NetworkInterface::NetworkInterface( string_view name,
 //! can be converted to a uint32_t (raw 32-bit IP address) by using the Address::ipv4_numeric() method.
 void NetworkInterface::send_datagram( InternetDatagram dgram, const Address& next_hop )
 {
-  uint32_t next_hop_num = next_hop.ipv4_numeric();
+  const uint32_t next_hop_num = next_hop.ipv4_numeric();
 
   update_arp_requests( next_hop_num );
 
   // update arp_requests_[next_hop_num] and ip_to_eth_[next_hop_num] if necessary
   if ( ip_to_eth_.contains( next_hop_num ) ) { // if we've received an arp in the past
 
-    EthernetHeader header {
+    const EthernetHeader header {
       .dst = ip_to_eth_[next_hop_num], .src = ethernet_address_, .type = EthernetHeader::TYPE_IPv4 };
-    EthernetFrame frame { .header = header, .payload = serialize( dgram ) };
+    const EthernetFrame frame { .header = header, .payload = serialize( dgram ) };
     transmit( frame );
     return;
   }
@@ -55,8 +55,8 @@ void NetworkInterface::send_datagram( InternetDatagram dgram, const Address& nex
 
     ARPrequest.target_ip_address = next_hop_num;
 
-    EthernetHeader header { .dst = ETHERNET_BROADCAST, .src = ethernet_address_, .type = EthernetHeader::TYPE_ARP };
-    EthernetFrame frame { .header = header, .payload = serialize( ARPrequest ) };
+    const EthernetHeader header { .dst = ETHERNET_BROADCAST, .src = ethernet_address_, .type = EthernetHeader::TYPE_ARP };
+    const EthernetFrame frame { .header = header, .payload = serialize( ARPrequest ) };
     transmit( frame );
 
     arp_requests_[next_hop_num].sent_time = cur_time_;
@@ -67,17 +67,17 @@ void NetworkInterface::send_datagram( InternetDatagram dgram, const Address& nex
 //! \param[in] frame the incoming Ethernet frame
 void NetworkInterface::recv_frame( EthernetFrame frame )
 {
-  EthernetHeader header = frame.header;
+  const EthernetHeader recv_header = frame.header;
 
-  if ( header.dst != ethernet_address_ && header.dst != ETHERNET_BROADCAST ) {
+  if ( recv_header.dst != ethernet_address_ && recv_header.dst != ETHERNET_BROADCAST ) {
     return;
   }
 
-  if ( header.type == EthernetHeader::TYPE_ARP ) {
+  if ( recv_header.type == EthernetHeader::TYPE_ARP ) {
     ARPMessage arp;
     if ( parse( arp, frame.payload ) ) {
 
-      uint32_t learned_ip = arp.sender_ip_address;
+      const uint32_t learned_ip = arp.sender_ip_address;
 
       update_arp_requests( learned_ip );
 
@@ -100,15 +100,15 @@ void NetworkInterface::recv_frame( EthernetFrame frame )
         ARPreply.target_ethernet_address = arp.sender_ethernet_address;
         ARPreply.target_ip_address = learned_ip;
 
-        EthernetHeader outHeader {
+        const EthernetHeader header {
           .dst = arp.sender_ethernet_address, .src = ethernet_address_, .type = EthernetHeader::TYPE_ARP };
-        EthernetFrame outframe { .header = outHeader, .payload = serialize( ARPreply ) };
-        transmit( outframe );
+        const EthernetFrame arp_frame { .header = header, .payload = serialize( ARPreply ) };
+        transmit( arp_frame );
       }
     }
   }
 
-  if ( header.type == EthernetHeader::TYPE_IPv4 ) {
+  if ( recv_header.type == EthernetHeader::TYPE_IPv4 ) {
     InternetDatagram internet_datagram;
     if ( parse( internet_datagram, frame.payload ) ) {
       datagrams_received_.push( internet_datagram );
