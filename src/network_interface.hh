@@ -4,10 +4,10 @@
 #include "ethernet_frame.hh"
 #include "ipv4_datagram.hh"
 
+#include <list>
 #include <memory>
 #include <queue>
 #include <unordered_map>
-#include <list>
 
 // A "network interface" that connects IP (the internet layer, or network layer)
 // with Ethernet (the network access layer, or link layer).
@@ -85,23 +85,23 @@ private:
   // Datagrams that have been received
   std::queue<InternetDatagram> datagrams_received_ {};
 
+  void update_arp_requests( uint32_t addr );
 
-  void update_arp_requests(uint32_t addr);
-  
   // ip and associated information such as connected ethernet_address
-  std::unordered_map<uint32_t,EthernetAddress> ip_to_eth_ {};
+  std::unordered_map<uint32_t, EthernetAddress> ip_to_eth_ {};
 
   // keep track of current time
-  uint32_t cur_time_ {0};
+  uint32_t cur_time_ { 0 };
 
-  struct ARPRequest{
+  struct ARPRequest
+  {
     bool sent = false;
-    uint32_t sent_time {0};
+    uint32_t sent_time { 0 };
 
     // bool received = false; // same as checking if ip_to_eth_ exists
-    uint32_t received_time {0};
+    uint32_t received_time { 0 };
     std::list<InternetDatagram> waiting_datagrams {};
   };
 
-  std::unordered_map<uint32_t,ARPRequest> arp_requests_ {};
+  std::unordered_map<uint32_t, ARPRequest> arp_requests_ {};
 };
