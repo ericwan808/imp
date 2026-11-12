@@ -31,36 +31,27 @@ NetworkInterface::NetworkInterface( string_view name,
 void NetworkInterface::send_datagram( InternetDatagram dgram, const Address& next_hop )
 {
 
-  if(!ip_to_eth.contains(Address::ipv4_numeric(next_hop))){
-    EthernetHeader header {dst = ip_to_eth_[Address::ipv4_numeric(next_hop)], src  = ethernet_address_, type = TYPE_IPv4};
-    EthernetFrame frame {header = header, payload = serialize( dgram )};
+  if(ip_to_eth_.contains(next_hop.ipv4_numeric())){
+    EthernetHeader header {.dst = ip_to_eth_[next_hop.ipv4_numeric()], .src  = ethernet_address_, .type = EthernetHeader::TYPE_IPv4};
+    EthernetFrame frame {.header = header, .payload = serialize( dgram )};
     transmit(frame);
     return;
   }
 
+  ARPMessage ARPrequest;
+  ARPrequest.opcode = ARPMessage::OPCODE_REQUEST;
 
-  // if next_hop not in map
-  // push to queue
-  // send ARP request
-  ARPMessage ARPreply;
+  ARPrequest.sender_ethernet_address = ethernet_address_;
+  ARPrequest.sender_ip_address = ip_address_.ipv4_numeric();
 
-        ARPreply.opcode = OPCODE_REPLY;
+  ARPrequest.target_ip_address = next_hop.ipv4_numeric();
 
-        ARPreply.sender_ethernet_address = ethernet_address_;
-        ARPreply.sender_ip_address = Address::ipv4_numeric(ip_address_);
-
-        ARPreply.target_ethernet_address = arp.sender_ethernet_address;
-        ARPreply.target_ip_address = arp.sender_ip_address;
+  EthernetHeader header {.dst = ETHERNET_BROADCAST, .src = ethernet_address_, .type= EthernetHeader::TYPE_ARP};
+  EthernetFrame frame {.header = header, .payload = serialize(ARPrequest)};
+  transmit(frame);
 
 
-        EthernetHeader outHeader {dst = arp.sender_ethernet_address, src = ethernet_address_, type= TYPE_ARP};
-        EthernetFrame outframe {header = outHeader, payload = serialize(ARPreply)};
-        transmit(outframe);
-
-
-  datagrams_waiting_.push({dgram, next_hop});
-  // return
-
+  datagrams_waiting_.push(dgram);
 
 }
 
@@ -69,36 +60,39 @@ void NetworkInterface::recv_frame( EthernetFrame frame )
 {
   EthernetHeader header = frame.header;
 
-  if (header.type == TYPE_ARP){
+  if (header.dst != ethernet_address_ || header.dst != ETHERNET_BROADCAST){
+    return ;
+  }
+
+  if (header.type == EthernetHeader::TYPE_ARP){
     ARPMessage arp;
     if(parse(arp, frame.payload)){
 
-      if(arp.opcode == OPCODE_REQUEST){
-        ARPMessage ARPreply;
+      ip_to_eth_[arp.sender_ip_address] = arp.sender_ethernet_address;
 
-        ARPreply.opcode = OPCODE_REPLY;
+      if(arp.opcode == ARPMessage::OPCODE_REQUEST){
+        ARPMessage ARPreply;
+        ARPreply.opcode = ARPMessage::OPCODE_REPLY;
 
         ARPreply.sender_ethernet_address = ethernet_address_;
-        ARPreply.sender_ip_address = Address::ipv4_numeric(ip_address_);
-
+        ARPreply.sender_ip_address = ip_address_.ipv4_numeric();
         ARPreply.target_ethernet_address = arp.sender_ethernet_address;
         ARPreply.target_ip_address = arp.sender_ip_address;
 
-
-        EthernetHeader outHeader {dst = arp.sender_ethernet_address, src = ethernet_address_, type= TYPE_ARP};
-        EthernetFrame outframe {header = outHeader, payload = serialize(ARPreply)};
+        EthernetHeader outHeader {.dst = arp.sender_ethernet_address, .src = ethernet_address_, .type= EthernetHeader::TYPE_ARP};
+        EthernetFrame outframe {.header = outHeader, .payload = serialize(ARPreply)};
         transmit(outframe);
       
-      } else if (arp.opcode == OPCODE_REPLY){
-        ip_to_eth_[arp.sender_ip_address] = arp.sender_ethernet_address;
       }
+      remembered_ips_.push({arp.sender_ip_address, cur_time_});
+      // send waiting datagrams that match received ip
     }
   }
 
-  if (header.type == TYPE_IPv4){
+  if (header.type == EthernetHeader::TYPE_IPv4){
    InternetDatagram internet_datagram;
    if ( parse( internet_datagram, frame.payload ) ) {
-    datagrams_received_.push_back(internet_datagram);
+    datagrams_received_.push(internet_datagram);
    }
   }
 }
@@ -106,5 +100,12 @@ void NetworkInterface::recv_frame( EthernetFrame frame )
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method
 void NetworkInterface::tick( const size_t ms_since_last_tick )
 {
-  debug( "unimplemented tick({}) called", ms_since_last_tick );
+  cur_time_ += ms_since_last_tick;
+
+  // forgets old ips
+  while(!remembered_ips_.empty() && remembered_ips_.front().time_learned <= cur_time_ - 30000){
+    uint32_t removed_ip = remembered_ips_.front().ip_address;
+    remembered_ips_.pop();
+    ip_to_eth_.erase(removed_ip);
+  }
 }

@@ -6,7 +6,7 @@
 
 #include <memory>
 #include <queue>
-#include <map>
+#include <unordered_map>
 
 // A "network interface" that connects IP (the internet layer, or network layer)
 // with Ethernet (the network access layer, or link layer).
@@ -84,11 +84,17 @@ private:
   // Datagrams that have been received
   std::queue<InternetDatagram> datagrams_received_ {};
 
-  std::unordered_map ip_to_eth_<uint32_t,EthernetAddress> {};
-  std::queue<QueuedIntegernetDatagram> datagrams_waiting_ {};
+  std::unordered_map<uint32_t,EthernetAddress> ip_to_eth_ {};
+  
+  std::queue<InternetDatagram> datagrams_waiting_ {};
 
-  struct QueuedIntegernetDatagram {
-    InternetDatagram dgram;
-    Address adr;
-  }
+
+  struct RememberedIP {
+    uint32_t ip_address;
+    uint32_t time_learned;
+  };
+
+  std::queue<RememberedIP> remembered_ips_ {};
+
+  uint32_t cur_time_ {0};
 };
