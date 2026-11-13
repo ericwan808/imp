@@ -85,22 +85,22 @@ private:
   // Datagrams that have been received
   std::queue<InternetDatagram> datagrams_received_ {};
 
+  // Remove old ip addresses and queued datagrams
   void update_arp_requests( uint32_t addr );
 
-  // ip and associated information such as connected ethernet_address
+  // map between ip and ethernet_address
   std::unordered_map<uint32_t, EthernetAddress> ip_to_eth_ {};
 
   // keep track of current time
   uint32_t cur_time_ { 0 };
 
+  // map between ip and ARP requests
   struct ARPRequest
   {
-    bool sent = false;
-    uint32_t sent_time { 0 };
-
-    // bool received = false; // same as checking if ip_to_eth_ exists
-    uint32_t received_time { 0 };
-    std::list<InternetDatagram> waiting_datagrams {};
+    bool sent = false; // has this request already been sent?
+    uint32_t sent_time { 0 }; // when ARP request was last sent
+    uint32_t received_time { 0 }; // when ARP response was received 
+    std::list<InternetDatagram> waiting_datagrams {}; // datagrams waiting to be sent
   };
 
   std::unordered_map<uint32_t, ARPRequest> arp_requests_ {};

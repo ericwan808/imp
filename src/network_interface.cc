@@ -31,11 +31,11 @@ NetworkInterface::NetworkInterface( string_view name,
 void NetworkInterface::send_datagram( InternetDatagram dgram, const Address& next_hop )
 {
   const uint32_t next_hop_num = next_hop.ipv4_numeric();
+ 
+  update_arp_requests( next_hop_num ); // check if ip is stale
 
-  update_arp_requests( next_hop_num );
-
-  // update arp_requests_[next_hop_num] and ip_to_eth_[next_hop_num] if necessary
-  if ( ip_to_eth_.contains( next_hop_num ) ) { // if we've received an arp in the past
+  // if we have a valid ip
+  if ( ip_to_eth_.contains( next_hop_num ) ) {
 
     const EthernetHeader header {
       .dst = ip_to_eth_[next_hop_num], .src = ethernet_address_, .type = EthernetHeader::TYPE_IPv4 };
@@ -44,21 +44,22 @@ void NetworkInterface::send_datagram( InternetDatagram dgram, const Address& nex
     return;
   }
 
+  // queue datagram to be sent once arp response is recieved
   arp_requests_[next_hop_num].waiting_datagrams.push_back( dgram );
 
+  // if we haven't sent an arp in the past or its been over 5 seconds, send an arp request
   if ( !arp_requests_[next_hop_num].sent || cur_time_ - arp_requests_[next_hop_num].sent_time >= 5000 ) {
     ARPMessage ARPrequest;
     ARPrequest.opcode = ARPMessage::OPCODE_REQUEST;
-
     ARPrequest.sender_ethernet_address = ethernet_address_;
     ARPrequest.sender_ip_address = ip_address_.ipv4_numeric();
-
     ARPrequest.target_ip_address = next_hop_num;
 
     const EthernetHeader header { .dst = ETHERNET_BROADCAST, .src = ethernet_address_, .type = EthernetHeader::TYPE_ARP };
     const EthernetFrame frame { .header = header, .payload = serialize( ARPrequest ) };
     transmit( frame );
 
+    // log arp request
     arp_requests_[next_hop_num].sent_time = cur_time_;
     arp_requests_[next_hop_num].sent = true;
   }
@@ -69,6 +70,7 @@ void NetworkInterface::recv_frame( EthernetFrame frame )
 {
   const EthernetHeader recv_header = frame.header;
 
+  // not intended for us
   if ( recv_header.dst != ethernet_address_ && recv_header.dst != ETHERNET_BROADCAST ) {
     return;
   }
@@ -79,22 +81,24 @@ void NetworkInterface::recv_frame( EthernetFrame frame )
 
       const uint32_t learned_ip = arp.sender_ip_address;
 
+      // remove stale arp info
       update_arp_requests( learned_ip );
 
+      // update new arp info
       ip_to_eth_[learned_ip] = arp.sender_ethernet_address;
       arp_requests_[learned_ip].received_time = cur_time_;
 
+      // send any queued datagrams
       list<InternetDatagram>& queued_dgrams = arp_requests_[learned_ip].waiting_datagrams;
-
       while ( !queued_dgrams.empty() ) {
         send_datagram( queued_dgrams.front(), Address::from_ipv4_numeric( learned_ip ) );
         queued_dgrams.pop_front();
       }
 
+      // send arp reply if asking for our ethernet
       if ( arp.opcode == ARPMessage::OPCODE_REQUEST && arp.target_ip_address == ip_address_.ipv4_numeric() ) {
         ARPMessage ARPreply;
         ARPreply.opcode = ARPMessage::OPCODE_REPLY;
-
         ARPreply.sender_ethernet_address = ethernet_address_;
         ARPreply.sender_ip_address = ip_address_.ipv4_numeric();
         ARPreply.target_ethernet_address = arp.sender_ethernet_address;
@@ -108,6 +112,8 @@ void NetworkInterface::recv_frame( EthernetFrame frame )
     }
   }
 
+
+  // received datagram
   if ( recv_header.type == EthernetHeader::TYPE_IPv4 ) {
     InternetDatagram internet_datagram;
     if ( parse( internet_datagram, frame.payload ) ) {
@@ -118,13 +124,14 @@ void NetworkInterface::recv_frame( EthernetFrame frame )
 
 void NetworkInterface::update_arp_requests( uint32_t addr )
 {
-
+  // remove old ip and arp info past 30 seconds
   if ( ip_to_eth_.contains( addr ) && cur_time_ - arp_requests_[addr].received_time >= 30000 ) {
     arp_requests_[addr].sent = false;
     ip_to_eth_.erase( addr );
     arp_requests_[addr].waiting_datagrams.clear();
   }
 
+  // remove queued datagrams if no arp reply within 5 seconds
   if ( arp_requests_[addr].sent && cur_time_ - arp_requests_[addr].sent_time >= 5000 ) {
     arp_requests_[addr].waiting_datagrams.clear();
   }
