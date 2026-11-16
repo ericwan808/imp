@@ -28,7 +28,7 @@ void Router::add_route( const uint32_t route_prefix,
   };
 
   auto it = routing_table_.begin();
-  while(it != routing_table_.end() && it->prefix_length <= prefix_length){
+  while(it != routing_table_.end() && it->prefix_length >= prefix_length){
     ++it;
   }
   routing_table_.insert(it, new_rule);
@@ -45,10 +45,11 @@ void Router::route()
       interf->datagrams_received().pop();
 
       IPv4Header header = datagram.header;
-      if (header.ttl <= 1){
+      if (datagram.header.ttl <= 1){
         continue;
       }
-      header.ttl--;
+      datagram.header.ttl--;
+      datagram.header.compute_checksum();
 
       uint32_t dst = header.dst;
       auto best_match = match_routes(dst);
@@ -69,7 +70,7 @@ void Router::route()
 vector<Router::ForwardingRule>::const_iterator Router::match_routes(uint32_t route){
   auto it = routing_table_.begin();
   while(it != routing_table_.end()){
-    if(it->prefix_length == 0 || match(route, it->route_prefix, it->prefix_length)){
+    if(match(route, it->route_prefix, it->prefix_length)){
       break;
     }
     ++it;
@@ -78,6 +79,8 @@ vector<Router::ForwardingRule>::const_iterator Router::match_routes(uint32_t rou
 }
 
 bool Router::match(uint32_t a, uint32_t b, uint8_t prefix){ 
+  if (prefix == 0) return true;
+
   uint32_t mask = 0xFFFFFFFF << (32 - prefix);
   return ((a & mask) == (b & mask));
 }
