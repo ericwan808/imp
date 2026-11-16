@@ -35,12 +35,18 @@ private:
   // The router's collection of network interfaces
   std::vector<std::shared_ptr<NetworkInterface>> interfaces_ {};
 
-  std::vector<ForwardingRule> routing_table_ {};
-
   struct ForwardingRule {
-    uint8_t prefix_length;
     uint32_t route_prefix;
+    uint8_t prefix_length;
     std::optional<Address> next_hop;
     size_t interface_num;
   };
+
+  // sorted list of routing rules by decreasing prefix length
+  std::vector<ForwardingRule> routing_table_ {};
+
+  std::vector<ForwardingRule>::const_iterator match_routes(uint32_t route);
+
+  bool match(uint32_t a, uint32_t b, uint8_t prefix);
+
 };
