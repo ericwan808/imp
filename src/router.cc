@@ -85,11 +85,11 @@ vector<Router::ForwardingRule>::const_iterator Router::match_routes(uint32_t rou
   return it;
 }
 
-bool Router::match(uint32_t a, uint32_t b, uint8_t prefix){ 
+bool Router::match(uint32_t a, uint32_t b, uint8_t length){ 
   // any prefix of length 0 will match
-  if (prefix == 0) return true;
+  if (length == 0) return true;
 
-  // check that the first prefix number of bits match
-  uint32_t mask = 0xFFFFFFFF << (32 - prefix);
+  // check that the first "length" number of bits match
+  uint32_t mask = 0xFFFFFFFF << (32 - length);
   return ((a & mask) == (b & mask));
 }
