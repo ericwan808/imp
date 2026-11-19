@@ -27,6 +27,7 @@ void Router::add_route( const uint32_t route_prefix,
     interface_num
   };
 
+  // insert new rule in reverse sorted order based on prefix length
   auto it = routing_table_.begin();
   while(it != routing_table_.end() && it->prefix_length >= prefix_length){
     ++it;
@@ -37,13 +38,15 @@ void Router::add_route( const uint32_t route_prefix,
 // Go through all the interfaces, and route every incoming datagram to its proper outgoing interface.
 void Router::route()
 {
+  // empty all interface datagram queues
   for(shared_ptr<NetworkInterface> interf : interfaces_){
-
     while(!(interf->datagrams_received().empty())){
 
+      // get next datagram to route
       InternetDatagram datagram = interf->datagrams_received().front();
       interf->datagrams_received().pop();
 
+      // if ttl not expired, update datagram
       IPv4Header header = datagram.header;
       if (datagram.header.ttl <= 1){
         continue;
@@ -51,6 +54,7 @@ void Router::route()
       datagram.header.ttl--;
       datagram.header.compute_checksum();
 
+      // find rule and interface matching destination address
       uint32_t dst = header.dst;
       auto best_match = match_routes(dst);
       if(best_match == routing_table_.end()){
@@ -58,6 +62,7 @@ void Router::route()
       }
       shared_ptr<NetworkInterface> next_interface = interface(best_match->interface_num);
 
+      // send datagram to next hop
       if(best_match->next_hop){
         next_interface->send_datagram(datagram, *(best_match->next_hop));
       } else {
@@ -68,6 +73,8 @@ void Router::route()
 }
 
 vector<Router::ForwardingRule>::const_iterator Router::match_routes(uint32_t route){
+
+  // loop until the first match
   auto it = routing_table_.begin();
   while(it != routing_table_.end()){
     if(match(route, it->route_prefix, it->prefix_length)){
@@ -79,8 +86,10 @@ vector<Router::ForwardingRule>::const_iterator Router::match_routes(uint32_t rou
 }
 
 bool Router::match(uint32_t a, uint32_t b, uint8_t prefix){ 
+  // any prefix of length 0 will match
   if (prefix == 0) return true;
 
+  // check that the first prefix number of bits match
   uint32_t mask = 0xFFFFFFFF << (32 - prefix);
   return ((a & mask) == (b & mask));
 }

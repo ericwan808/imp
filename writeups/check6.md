@@ -19,11 +19,22 @@ of bugs, asymptotic performance, empirical performance, required
 implementation time and difficulty, and other factors. Include any
 measurements if applicable.]: []
 
+save forwarding rules in a sorted order from highest prefix length (most specific) 
+to lowest. When checking, simply return the first match which will have the 
+highest prefix length.
+
 Implementation Challenges:
 []
+decrement ttl and compute checksum,
+iterating through c++ vectors is a pain when I'm used to 
+using normal indexing
 
 Remaining Bugs:
-[]
+If two rules have the same prefix and prefix length but route to different 
+next hops, the current router code does not handle that and simply
+chooses the rule first inserted. This may be an issue if a rule were to be 
+updated, but since removing and updating rules was not part of the checkpoint 
+scope it remains unhandled.
 
 - If applicable: I received help from a former student in this class,
   another expert, or a chatbot or other AI system (e.g. ChatGPT,

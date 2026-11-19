@@ -45,8 +45,10 @@ private:
   // sorted list of routing rules by decreasing prefix length
   std::vector<ForwardingRule> routing_table_ {};
 
+  // returns the ForwardingRule that is the longest match
   std::vector<ForwardingRule>::const_iterator match_routes(uint32_t route);
 
+  // checks whether a specific prefix matches up to a certain length
   bool match(uint32_t a, uint32_t b, uint8_t prefix);
 
 };
